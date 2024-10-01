@@ -1,39 +1,100 @@
-function create_predefined_values(input_dict)
-    predefined_values = Dict{String, Set{String}}()
-    for key in keys(input_dict)
-        parts = split(key, r"[\[\],]"; keepempty=false)
-        if length(parts) > 1
-            case = parts[1]
-            for (i, part) in enumerate(parts[2:end])
-                dim_name = "dim$(i)"
-                if !haskey(predefined_values, dim_name)
-                    predefined_values[dim_name] = Set{String}()
+function group_and_union_similar_sets(input_dict::Dict{String, Vector{Set{String}}})
+    # Flatten all sets into a single vector
+    all_sets = Set{String}[]
+    for sets in values(input_dict)
+        append!(all_sets, sets)
+    end
+    
+    # Create a dictionary to store groups
+    groups = DefaultDict{Set{String}, Vector{Set{String}}}(Vector{Set{String}})
+    
+    # Group sets with identical elements
+    for s in all_sets
+        key = Set(s)
+        push!(groups[key], s)
+    end
+    
+    # Merge groups with overlapping elements and create unions
+    merged_groups = Set{String}[]
+    while !isempty(groups)
+        current_group = pop!(groups).second
+        changed = true
+        while changed
+            changed = false
+            for (key, group) in groups
+                if any(s1 -> any(s2 -> !isempty(intersect(s1, s2)), group), current_group)
+                    append!(current_group, group)
+                    delete!(groups, key)
+                    changed = true
+                    break
                 end
-                push!(predefined_values[dim_name], part)
             end
         end
+        # Create a union of all sets in the current group
+        push!(merged_groups, union(current_group...))
     end
-    return predefined_values
+    
+    return merged_groups
 end
 
-function create_case_dimensions(input_dict, predefined_values)
-    case_dimensions = OrderedDict{String, Vector{String}}()
+function create_predefined_values(input_dict, named_unique=nothing)
+    # Step 1: Extract dimensions for each prefix
+    prefix_dimensions = Dict{String, Vector{Set{String}}}()
+    
     for key in keys(input_dict)
-        parts = split(key, r"[\[\],]"; keepempty=false)
-        if length(parts) > 1
-            case = parts[1]
-            if !haskey(case_dimensions, case)
-                case_dimensions[case] = String[]
-            end
-            for (i, part) in enumerate(parts[2:end])
-                dim_name = "dim$(i)"
-                if dim_name in keys(predefined_values) && part in predefined_values[dim_name] && dim_name ∉ case_dimensions[case]
-                    push!(case_dimensions[case], dim_name)
-                end
-            end
+        if !contains(key, "[")  # Handle scalar variables
+            prefix_dimensions[key] = Vector{Set{String}}()
+            continue
+        end
+        
+        prefix, dims = split(key, "[", limit=2)
+        dims = split(strip(dims, ['[', ']']), ",")
+        
+        if !haskey(prefix_dimensions, prefix)
+            prefix_dimensions[prefix] = [Set{String}() for _ in 1:length(dims)]
+        end
+        
+        for (i, dim) in enumerate(dims)
+            push!(prefix_dimensions[prefix][i], strip(dim))
         end
     end
-    return case_dimensions
+
+    if isnothing(named_unique)
+        merged_groups = group_and_union_similar_sets(prefix_dimensions)
+        
+        # Assign names to each set
+        named_unique = Dict("dim$(i)" => set for (i, set) in enumerate(merged_groups))
+    end
+    
+    # Identify prefix dimensions with corresponding dimension names
+    prefix_dim_names = Dict{String, Vector{String}}()
+    
+    for (prefix, dimensions) in prefix_dimensions
+        if isempty(dimensions)  # Handle scalar variables
+            prefix_dim_names[prefix] = String[]
+            continue
+        end
+        
+        dim_names = String[]
+        for dim_set in dimensions
+            found = false
+            for (name, set) in named_unique
+                if dim_set ⊆ Set(set)  # Convert to Set for subset check
+                    push!(dim_names, name)
+                    found = true
+                    break
+                end
+            end
+            if !found
+                push!(dim_names, "unknown")
+            end
+        end
+        prefix_dim_names[prefix] = dim_names
+    end
+
+    named_unique = Dict(name => sort(collect(Set(set))) for (name, set) in named_unique)
+    
+    return named_unique, prefix_dim_names
 end
 
 function transform_dict(input_dict, predefined_values, case_dimensions)
