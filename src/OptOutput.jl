@@ -15,11 +15,14 @@ function process_optimization_results(mps_string::String, primal_solution::Vecto
     predefined_values = create_predefined_values(variable_results)
     case_dimensions = create_case_dimensions(variable_results, predefined_values)
     transformed_dict, dim_to_index, index_to_dim = transform_dict(variable_results, predefined_values, case_dimensions)
+    variable_dataframes = create_dataframes(transformed_dict, index_to_dim, case_dimensions)
 
-    dataframes = create_dataframes(transformed_dict, index_to_dim, case_dimensions)
-    
+    eq_predefined_values = create_predefined_values(equation_results)
+    eq_case_dimensions = create_case_dimensions(equation_results, eq_predefined_values)
+    eq_transformed_dict, eq_dim_to_index, eq_index_to_dim = transform_dict(equation_results, eq_predefined_values, eq_case_dimensions)
+    equation_dataframes = create_dataframes(eq_transformed_dict, eq_index_to_dim, eq_case_dimensions)
 
-    return dataframes, variable_results, equation_results
+    return variable_dataframes, equation_dataframes, variable_results, equation_results
 end
 
 function save_intermediate_results(variable_results, equation_results, output_dir="output")
@@ -34,11 +37,15 @@ function save_intermediate_results(variable_results, equation_results, output_di
     end
 end
 
-function save_final_results(dataframes, output_dir="output")
+function save_final_results(variable_dataframes, equation_dataframes, output_dir="output")
     mkpath(output_dir)
 
-    for (case, df) in dataframes
-        CSV.write(joinpath(output_dir, "$(case).csv"), df)
+    for (case, df) in variable_dataframes
+        CSV.write(joinpath(output_dir, "var_$(case).csv"), df)
+    end
+
+    for (case, df) in equation_dataframes
+        CSV.write(joinpath(output_dir, "eq_$(case).csv"), df)
     end
 end
 
