@@ -1,20 +1,16 @@
 function group_and_union_similar_sets(input_dict::Dict{String, Vector{Set{String}}})
-    # Flatten all sets into a single vector
     all_sets = Set{String}[]
     for sets in values(input_dict)
         append!(all_sets, sets)
     end
     
-    # Create a dictionary to store groups
     groups = DefaultDict{Set{String}, Vector{Set{String}}}(Vector{Set{String}})
     
-    # Group sets with identical elements
     for s in all_sets
         key = Set(s)
         push!(groups[key], s)
     end
     
-    # Merge groups with overlapping elements and create unions
     merged_groups = Set{String}[]
     while !isempty(groups)
         current_group = pop!(groups).second
@@ -30,25 +26,28 @@ function group_and_union_similar_sets(input_dict::Dict{String, Vector{Set{String
                 end
             end
         end
-        # Create a union of all sets in the current group
         push!(merged_groups, union(current_group...))
     end
     
     return merged_groups
 end
 
-function create_predefined_values(input_dict, named_unique=nothing)
-    # Step 1: Extract dimensions for each prefix
+function create_predefined_values(input_dict, symbols::Vector{String}=String[], named_unique=nothing)
     prefix_dimensions = Dict{String, Vector{Set{String}}}()
     
     for key in keys(input_dict)
-        if !contains(key, "[")  # Handle scalar variables
-            prefix_dimensions[key] = Vector{Set{String}}()
+        prefix = contains(key, "[") ? split(key, "[", limit=2)[1] : key
+        
+        if !isempty(symbols) && !(prefix in symbols)
             continue
         end
         
-        prefix, dims = split(key, "[", limit=2)
-        dims = split(strip(dims, ['[', ']']), ",")
+        if !contains(key, "[")
+            prefix_dimensions[prefix] = Vector{Set{String}}()
+            continue
+        end
+        
+        dims = split(strip(split(key, "[", limit=2)[2], ['[', ']']), ",")
         
         if !haskey(prefix_dimensions, prefix)
             prefix_dimensions[prefix] = [Set{String}() for _ in 1:length(dims)]
@@ -62,15 +61,13 @@ function create_predefined_values(input_dict, named_unique=nothing)
     if isnothing(named_unique)
         merged_groups = group_and_union_similar_sets(prefix_dimensions)
         
-        # Assign names to each set
         named_unique = Dict("dim$(i)" => set for (i, set) in enumerate(merged_groups))
     end
     
-    # Identify prefix dimensions with corresponding dimension names
     prefix_dim_names = Dict{String, Vector{String}}()
     
     for (prefix, dimensions) in prefix_dimensions
-        if isempty(dimensions)  # Handle scalar variables
+        if isempty(dimensions)
             prefix_dim_names[prefix] = String[]
             continue
         end
@@ -79,7 +76,7 @@ function create_predefined_values(input_dict, named_unique=nothing)
         for dim_set in dimensions
             found = false
             for (name, set) in named_unique
-                if dim_set ⊆ Set(set)  # Convert to Set for subset check
+                if dim_set ⊆ Set(set)
                     push!(dim_names, name)
                     found = true
                     break
