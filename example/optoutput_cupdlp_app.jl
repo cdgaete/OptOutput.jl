@@ -2,7 +2,6 @@ using JuMP
 using cuPDLP
 using OptOutput
 
-# Create the model
 function create_model()
     model = Model()
     @variable(model, x >= 0)
@@ -15,14 +14,12 @@ function create_model()
     return model
 end
 
-# Convert JuMP model to MPS string
 function model_to_mps_string(model)
     io = IOBuffer()
-    write_to_file(model, io, format=MOI.FileFormats.MPS.Model)
+    MOI.write_to_file(model, io, MOI.FileFormats.MPS.Model())
     return String(take!(io))
 end
 
-# Solve the model using cuPDLP
 function solve_with_cupdlp(mps_string)
     lp = cuPDLP.qps_reader_to_standard_form(IOBuffer(mps_string))
 
@@ -64,25 +61,18 @@ function solve_with_cupdlp(mps_string)
     return output.primal_solution, output.dual_solution
 end
 
-# Main function
 function main()
-    # Create the model
     model = create_model()
 
-    # Convert model to MPS string
     mps_string = model_to_mps_string(model)
 
-    # Solve the model
     primal_solution, dual_solution = solve_with_cupdlp(mps_string)
 
-    # Process optimization results
     dataframes, variable_results, equation_results = process_optimization_results(mps_string, primal_solution, dual_solution)
 
-    # Save final results
     save_final_results(dataframes, "output")
 
     println("Optimization completed. Results saved in the 'output' directory.")
 end
 
-# Run the main function
 main()
