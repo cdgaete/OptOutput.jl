@@ -1,6 +1,7 @@
 using JuMP
 using cuPDLP
 using OptOutput
+import MathOptInterface as MOI
 
 function create_model()
     model = Model()
@@ -16,7 +17,7 @@ end
 
 function model_to_mps_string(model)
     io = IOBuffer()
-    MOI.write_to_file(model, io, MOI.FileFormats.MPS.Model())
+    write_to_file(model, io, format=MOI.FileFormats.MPS.Model)
     return String(take!(io))
 end
 
