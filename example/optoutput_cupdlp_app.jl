@@ -14,16 +14,17 @@ function create_model()
     return model
 end
 
-function model_to_mps_string(model)
-    temp_file = tempname() * ".mps"
-    write_to_file(model, temp_file)
-    mps_string = read(temp_file, String)
-    rm(temp_file)
-    return mps_string
+function model_to_mps_file(model, output_dir)
+    if !isdir(output_dir)
+        mkpath(output_dir)
+    end
+    mps_file_path = joinpath(output_dir, "model.mps")
+    write_to_file(model, mps_file_path)
+    return mps_file_path
 end
 
-function solve_with_cupdlp(mps_string)
-    lp = cuPDLP.qps_reader_to_standard_form(IOBuffer(mps_string))
+function solve_with_cupdlp(mps_file_path)
+    lp = cuPDLP.qps_reader_to_standard_form(mps_file_path)
 
     restart_params = cuPDLP.construct_restart_parameters(
         cuPDLP.ADAPTIVE_KKT,
@@ -64,17 +65,24 @@ function solve_with_cupdlp(mps_string)
 end
 
 function main()
+    output_dir = "output"
+    if !isdir(output_dir)
+        mkpath(output_dir)
+    end
+
     model = create_model()
 
-    mps_string = model_to_mps_string(model)
+    mps_file_path = model_to_mps_file(model, output_dir)
 
-    primal_solution, dual_solution = solve_with_cupdlp(mps_string)
+    primal_solution, dual_solution = solve_with_cupdlp(mps_file_path)
+
+    mps_string = read(mps_file_path, String)
 
     dataframes, variable_results, equation_results = process_optimization_results(mps_string, primal_solution, dual_solution)
 
-    save_final_results(dataframes, "output")
+    save_final_results(dataframes, output_dir)
 
-    println("Optimization completed. Results saved in the 'output' directory.")
+    println("Optimization completed. Results saved in the '$(output_dir)' directory.")
 end
 
 main()
