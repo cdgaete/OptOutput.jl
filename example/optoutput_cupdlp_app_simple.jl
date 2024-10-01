@@ -65,7 +65,7 @@ function solve_with_cupdlp(mps_file_path)
 end
 
 function main()
-    output_dir = "output"
+    output_dir = "output_simple"
     if !isdir(output_dir)
         mkpath(output_dir)
     end
@@ -76,11 +76,9 @@ function main()
 
     primal_solution, dual_solution = solve_with_cupdlp(mps_file_path)
 
-    mps_string = read(mps_file_path, String)
+    dataframes, all_results = process_optimization_results(mps_file_path, primal_solution, dual_solution)
 
-    dataframes, variable_results, equation_results = process_optimization_results(mps_string, primal_solution, dual_solution)
-
-    save_final_results(dataframes, output_dir)
+    save_results(dataframes, output_dir)
 
     println("Optimization completed. Results saved in the '$(output_dir)' directory.")
 end

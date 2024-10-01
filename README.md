@@ -1,10 +1,10 @@
 # OptOutput.jl
 
-OptOutput.jl is a Julia package that provides utility functions for collecting optimization results in tabular format (DataFrames) from JuMP models. It supports extracting primal and dual value results from solvers and transforming them into easily accessible data structures.
+OptOutput.jl is a Julia package that provides utility functions for collecting optimization results in tabular format (DataFrames) from MPS files and solver outputs. It supports extracting primal and dual value results and transforming them into easily accessible data structures.
 
 ## Features
 
-- Parse MPS format strings from JuMP models
+- Parse MPS format strings
 - Extract primal and dual solutions
 - Transform optimization results into structured data
 - Generate DataFrames for easy data manipulation and analysis
@@ -20,13 +20,14 @@ pkg> add OptOutput
 
 ## Usage
 
-Here's a basic example of how to use OptOutput.jl:
+Here's a basic example of how to use OptOutput.jl with an external solver:
 
 ```julia
 using JuMP
 using OptOutput
+using YourExternalSolver  # Replace with your actual solver package
 
-# Create and solve your JuMP model
+# Create your JuMP model
 model = Model()
 @variable(model, x >= 0)
 @variable(model, 0 <= y <= 3)
@@ -36,8 +37,19 @@ model = Model()
 @constraint(model, c2, 7x + 12y >= 120)
 @constraint(model, c3, x + y <= 20)
 
-# Process the optimization model
-dataframes, variable_results, equation_results = process_optimization_model(model)
+# Get the MPS string representation of the model
+io = IOBuffer()
+write_to_file(model, io, format=MOI.FileFormats.MPS.Model)
+mps_string = String(take!(io))
+
+# Solve the model using your external solver
+# This is just an example, replace with your actual solver call
+solution = solve_with_external_solver(mps_string)
+primal_solution = solution.primal
+dual_solution = solution.dual
+
+# Process the optimization results
+dataframes, variable_results, equation_results = process_optimization_results(mps_string, primal_solution, dual_solution)
 
 # Optionally save intermediate results
 save_intermediate_results(variable_results, equation_results)

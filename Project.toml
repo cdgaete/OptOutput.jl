@@ -1,0 +1,13 @@
+name = "OptOutput"
+uuid = "d2df110f-16d8-471d-975f-730b0f886153"
+authors = ["Carlos Gaete-Morales <cdgaete@gmail.com>"]
+version = "0.0.1"
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
+
+[compat]
+julia = "1.10.5"

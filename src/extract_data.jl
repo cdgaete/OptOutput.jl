@@ -8,5 +8,7 @@ function extract_data(mps_string::String, primal_solution::Vector{Float64}, dual
     variable_results = map_solution_to_sections(variables, primal_solution)
     equation_results = map_solution_to_sections(equations, dual_solution)
 
-    return variable_results, equation_results
+    all_results = merge(variable_results, equation_results)
+
+    return all_results
 end

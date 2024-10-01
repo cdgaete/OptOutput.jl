@@ -9,22 +9,13 @@ include("parse_mps.jl")
 include("transform_data.jl")
 include("extract_data.jl")
 
-function process_optimization_results(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, cases::Vector{String}=String[])
+function process_optimization_results(mps_path::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, cases::Vector{String}=String[])
+    mps_string = read(mps_path, String)
     all_results = extract_data(mps_string, primal_solution, dual_solution)
 
     predefined_values = create_predefined_values(all_results)
     case_dimensions = create_case_dimensions(all_results, predefined_values)
     transformed_dict, dim_to_index, index_to_dim = transform_dict(all_results, predefined_values, case_dimensions)
-
-    if isempty(cases)
-        cases = collect(keys(transformed_dict))
-    else
-        for case in cases
-            if !haskey(transformed_dict, case)
-                error("Case '$case' not found in the results.")
-            end
-        end
-    end
 
     dataframes = create_dataframes(transformed_dict, index_to_dim, case_dimensions, cases)
 

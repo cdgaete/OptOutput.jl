@@ -81,10 +81,20 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
     return result, dim_to_index, index_to_dim
 end
 
-function create_dataframes(transformed_dict, index_to_dim, case_dimensions)
+function create_dataframes(transformed_dict, index_to_dim, case_dimensions, cases::Vector{String}=String[])
     dataframes = Dict{String, DataFrame}()
 
-    for (case, data) in transformed_dict
+    if isempty(cases)
+        cases = collect(keys(transformed_dict))
+    end
+
+    for case in cases
+        if !haskey(transformed_dict, case)
+            @warn "Case '$case' not found in the transformed data. Skipping."
+            continue
+        end
+
+        data = transformed_dict[case]
         df = DataFrame()
 
         for dim in get(case_dimensions, case, [])
