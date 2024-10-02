@@ -1,4 +1,4 @@
-function parse_mps_sections(mps_string::String)
+function extract_variables_and_equations_from_mps(mps_string::String)
     variables = String[]
     equations = String[]
     current_section = ""

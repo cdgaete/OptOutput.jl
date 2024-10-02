@@ -11,17 +11,17 @@ include("extract_data.jl")
 
 function process_optimization_results(mps_path::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[])
     mps_string = read(mps_path, String)
-    all_results = extract_data(mps_string, primal_solution, dual_solution)
+    all_results = combine_primal_dual_solutions(mps_string, primal_solution, dual_solution)
 
-    named_unique, prefix_dim_names = create_predefined_values(all_results)
-    transformed_dict, dim_to_index, index_to_dim = transform_dict(all_results, named_unique, prefix_dim_names)
+    named_sets, variable_dimensions = create_named_sets_and_dimensions(all_results, nothing, symbols)
+    structured_results, dim_to_index, index_to_dim = structure_optimization_results(all_results, named_sets, variable_dimensions)
 
-    dataframes = create_dataframes(transformed_dict, index_to_dim, prefix_dim_names, symbols)
+    result_dataframes = create_result_dataframes(structured_results, index_to_dim, variable_dimensions, symbols)
 
-    return dataframes, all_results
+    return result_dataframes, all_results
 end
 
-function save_results(dataframes::Dict{String, DataFrame}, output_dir::String="output")
+function save_results_to_csv(dataframes::Dict{String, DataFrame}, output_dir::String="output")
     mkpath(output_dir)
 
     for (symbol, df) in dataframes
@@ -30,10 +30,10 @@ function save_results(dataframes::Dict{String, DataFrame}, output_dir::String="o
 end
 
 export process_optimization_results,
-        create_predefined_values,
-        create_dataframes,
-        transform_dict,
-        read_solution,
-        save_results,
-        extract_data
+        create_named_sets_and_dimensions,
+        create_result_dataframes,
+        structure_optimization_results,
+        read_solution_from_file,
+        save_results_to_csv,
+        combine_primal_dual_solutions
 end

@@ -3,15 +3,12 @@ using cuPDLP
 using OptOutput
 
 function create_model()
-    # Define model
     model = Model()
 
-    # Sets
     products = ["A", "B", "C"]
     factories = ["F1", "F2"]
     periods = 1:4
     
-    # Parameters
     production_cost = Dict(
         ("A", "F1") => 10, ("A", "F2") => 12,
         ("B", "F1") => 11, ("B", "F2") => 10,
@@ -28,18 +25,13 @@ function create_model()
         "F1" => 500, "F2" => 450,
     )
     
-    # Variables
     @variable(model, x[products, factories, periods] >= 0)
     
-    # Objective: Minimize total production cost
     @objective(model, Min, sum(production_cost[p, f] * x[p, f, t] for p in products, f in factories, t in periods))
     
-    # Constraints
-    # Meet demand for each product in each period
     @constraint(model, demand_constraint[p in products, t in periods],
         sum(x[p, f, t] for f in factories) == demand[p, t])
     
-    # Respect factory capacity in each period
     @constraint(model, capacity_constraint[f in factories, t in periods],
         sum(x[p, f, t] for p in products) <= capacity[f])
 
@@ -110,7 +102,7 @@ function main()
 
     dataframes, _ = process_optimization_results(mps_file_path, primal_solution, dual_solution)
 
-    save_results(dataframes, output_dir)
+    save_results_to_csv(dataframes, output_dir)
 
     println("Optimization completed. Results saved in the '$(output_dir)' directory.")
 end

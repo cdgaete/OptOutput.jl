@@ -8,7 +8,7 @@ OptOutput.jl is a Julia package that provides utility functions for collecting o
 - Extract primal and dual solutions
 - Transform optimization results into structured data
 - Generate DataFrames for easy data manipulation and analysis
-- Optional saving of intermediate and final results to disk
+- Optional saving of results to CSV files
 
 ## Installation
 
@@ -37,25 +37,18 @@ model = Model()
 @constraint(model, c2, 7x + 12y >= 120)
 @constraint(model, c3, x + y <= 20)
 
-# Get the MPS string representation of the model
-io = IOBuffer()
-write_to_file(model, io, format=MOI.FileFormats.MPS.Model)
-mps_string = String(take!(io))
+# Write the model to an MPS file
+write_to_file(model, "model.mps")
 
 # Solve the model using your external solver
 # This is just an example, replace with your actual solver call
-solution = solve_with_external_solver(mps_string)
-primal_solution = solution.primal
-dual_solution = solution.dual
+primal_solution, dual_solution = solve_with_external_solver("model.mps")
 
 # Process the optimization results
-dataframes, variable_results, equation_results = process_optimization_results(mps_string, primal_solution, dual_solution)
+dataframes, all_results = process_optimization_results("model.mps", primal_solution, dual_solution)
 
-# Optionally save intermediate results
-save_intermediate_results(variable_results, equation_results)
-
-# Optionally save final results
-save_final_results(dataframes)
+# Optionally save results to CSV files
+save_results_to_csv(dataframes, "output_directory")
 
 # Work with the resulting DataFrames
 for (case, df) in dataframes

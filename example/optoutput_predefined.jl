@@ -19,7 +19,7 @@ sample_input = Dict(
 )
 
 # Test without providing named_unique
-named_unique, prefix_dim_names = create_predefined_values(sample_input)
+named_unique, prefix_dim_names = create_named_sets_and_dimensions(sample_input)
 
 println("Named Sets:")
 for (name, set) in named_unique
@@ -60,7 +60,7 @@ custom_named_unique = Dict(
     "technologies" => ["Offshore_Wind", "Run-of-River"]
 )
 
-custom_named_unique, custom_prefix_dim_names = create_predefined_values(sample_input, custom_named_unique)
+custom_named_unique, custom_prefix_dim_names = create_named_sets_and_dimensions(sample_input, custom_named_unique)
 
 println("\nCustom Named Sets:")
 for (name, set) in custom_named_unique

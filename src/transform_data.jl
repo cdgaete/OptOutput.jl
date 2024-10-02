@@ -1,4 +1,4 @@
-function group_and_union_similar_sets(input_dict::Dict{String, Vector{Set{String}}})
+function group_and_merge_similar_sets(input_dict::Dict{String, Vector{Set{String}}})
     all_sets = Set{String}[]
     for sets in values(input_dict)
         append!(all_sets, sets)
@@ -32,7 +32,7 @@ function group_and_union_similar_sets(input_dict::Dict{String, Vector{Set{String
     return merged_groups
 end
 
-function create_predefined_values(input_dict, symbols::Vector{String}=String[], named_unique=nothing)
+function create_named_sets_and_dimensions(input_dict, named_sets=nothing, symbols::Vector{String}=String[])
     prefix_dimensions = Dict{String, Vector{Set{String}}}()
     
     for key in keys(input_dict)
@@ -58,24 +58,24 @@ function create_predefined_values(input_dict, symbols::Vector{String}=String[], 
         end
     end
 
-    if isnothing(named_unique)
-        merged_groups = group_and_union_similar_sets(prefix_dimensions)
+    if isnothing(named_sets)
+        merged_groups = group_and_merge_similar_sets(prefix_dimensions)
         
-        named_unique = Dict("dim$(i)" => set for (i, set) in enumerate(merged_groups))
+        named_sets = Dict("dim$(i)" => set for (i, set) in enumerate(merged_groups))
     end
     
-    prefix_dim_names = Dict{String, Vector{String}}()
+    variable_dimensions = Dict{String, Vector{String}}()
     
     for (prefix, dimensions) in prefix_dimensions
         if isempty(dimensions)
-            prefix_dim_names[prefix] = String[]
+            variable_dimensions[prefix] = String[]
             continue
         end
         
         dim_names = String[]
         for dim_set in dimensions
             found = false
-            for (name, set) in named_unique
+            for (name, set) in named_sets
                 if dim_set ⊆ Set(set)
                     push!(dim_names, name)
                     found = true
@@ -86,24 +86,24 @@ function create_predefined_values(input_dict, symbols::Vector{String}=String[], 
                 push!(dim_names, "unknown")
             end
         end
-        prefix_dim_names[prefix] = dim_names
+        variable_dimensions[prefix] = dim_names
     end
 
-    named_unique = Dict(name => sort(collect(Set(set))) for (name, set) in named_unique)
+    named_sets = Dict(name => sort(collect(Set(set))) for (name, set) in named_sets)
     
-    return named_unique, prefix_dim_names
+    return named_sets, variable_dimensions
 end
 
-function transform_dict(input_dict, predefined_values, case_dimensions)
+function structure_optimization_results(input_dict, named_sets, variable_dimensions)
     dim_to_index = OrderedDict()
     index_to_dim = OrderedDict()
 
-    for (case, dimensions) in case_dimensions
+    for (case, dimensions) in variable_dimensions
         dim_to_index[case] = OrderedDict()
         index_to_dim[case] = OrderedDict()
         for dim in dimensions
-            if haskey(predefined_values, dim)
-                sorted_values = sort(collect(predefined_values[dim]))
+            if haskey(named_sets, dim)
+                sorted_values = sort(collect(named_sets[dim]))
                 dim_to_index[case][dim] = Dict(val => i for (i, val) in enumerate(sorted_values))
                 index_to_dim[case][dim] = Dict(i => val for (i, val) in enumerate(sorted_values))
             end
@@ -114,7 +114,7 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
         parts = split(key, r"[\[\],]"; keepempty=false)
         case = parts[1]
         dim_values = [get(get(dim_to_index, case, Dict())[dim], parts[i+1], 0)
-                      for (i, dim) in enumerate(get(case_dimensions, case, [])) if i < length(parts)]
+                      for (i, dim) in enumerate(get(variable_dimensions, case, [])) if i < length(parts)]
         return case, dim_values
     end
 
@@ -125,7 +125,7 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
             result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
             result[case]["value"] = Vector{Float64}()
         end
-        for (i, dim) in enumerate(get(case_dimensions, case, []))
+        for (i, dim) in enumerate(get(variable_dimensions, case, []))
             if i <= length(dim_values)
                 if !haskey(result[case], dim)
                     result[case][dim] = Vector{Int}()
@@ -136,13 +136,12 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
         push!(result[case]["value"], Float64(value))
     end
 
-    # Add missing variables and constraints with zero values
-    for case in keys(case_dimensions)
+    for case in keys(variable_dimensions)
         if !haskey(result, case)
             result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
             result[case]["value"] = Vector{Float64}()
         end
-        for dim in case_dimensions[case]
+        for dim in variable_dimensions[case]
             if !haskey(result[case], dim)
                 result[case][dim] = Vector{Int}()
                 push!(result[case]["value"], 0.0)
@@ -153,23 +152,23 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
     return result, dim_to_index, index_to_dim
 end
 
-function create_dataframes(transformed_dict, index_to_dim, case_dimensions, cases::Vector{String}=String[])
+function create_result_dataframes(structured_results, index_to_dim, variable_dimensions, cases::Vector{String}=String[])
     dataframes = Dict{String, DataFrame}()
 
     if isempty(cases)
-        cases = collect(keys(transformed_dict))
+        cases = collect(keys(structured_results))
     end
 
     for case in cases
-        if !haskey(transformed_dict, case)
-            @warn "Case '$case' not found in the transformed data. Skipping."
+        if !haskey(structured_results, case)
+            @warn "Case '$case' not found in the structured results. Skipping."
             continue
         end
 
-        data = transformed_dict[case]
+        data = structured_results[case]
         df = DataFrame()
 
-        for dim in get(case_dimensions, case, [])
+        for dim in get(variable_dimensions, case, [])
             if haskey(data, dim)
                 df[!, dim] = [index_to_dim[case][dim][i] for i in data[dim]]
             end
@@ -177,7 +176,7 @@ function create_dataframes(transformed_dict, index_to_dim, case_dimensions, case
 
         df[!, "value"] = data["value"]
 
-        if !isempty(get(case_dimensions, case, []))
+        if !isempty(get(variable_dimensions, case, []))
             sort!(df, [col for col in names(df) if col != "value"])
         end
 
