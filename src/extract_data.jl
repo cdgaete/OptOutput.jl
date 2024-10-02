@@ -1,16 +1,26 @@
-function map_solution_to_variables_and_equations(sections, solution)
-    @assert length(sections) == length(solution) "Sections and solution must have the same length"
-    return Dict(section => sol for (section, sol) in zip(sections, solution))
-end
+using DataStructures
 
-function combine_primal_dual_solutions(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64})
+function combine_primal_dual_solutions(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[])
     variables, equations = extract_variables_and_equations_from_mps(mps_string)
-
-    variable_results = map_solution_to_variables_and_equations(variables, primal_solution)
-    equation_results = map_solution_to_variables_and_equations(equations, dual_solution)
-
-    all_results = merge(variable_results, equation_results)
-
+    
+    symbol_set = Set(symbols)
+    
+    all_results = OrderedDict{String, Float64}()
+    
+    for (i, var) in enumerate(variables)
+        prefix = split(var, '[', limit=2)[1]
+        if isempty(symbols) || prefix in symbol_set
+            all_results[var] = primal_solution[i]
+        end
+    end
+    
+    for (i, eq) in enumerate(equations)
+        prefix = split(eq, '[', limit=2)[1]
+        if isempty(symbols) || prefix in symbol_set
+            all_results[eq] = dual_solution[i]
+        end
+    end
+    
     return all_results
 end
 
