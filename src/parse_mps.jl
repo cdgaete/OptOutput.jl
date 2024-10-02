@@ -3,11 +3,18 @@ function extract_variables_and_equations_from_mps_parallel(mps_string::String, s
     chunk_size = ceil(Int, length(lines) / num_workers)
     chunks = [String.(lines[i:min(i+chunk_size-1, end)]) for i in 1:chunk_size:length(lines)]
 
-    results = @distributed (merge) for chunk in chunks
-        extract_variables_and_equations_from_chunk(chunk, symbols)
+    results = @distributed (vcat) for chunk in chunks
+        [extract_variables_and_equations_from_chunk(chunk, symbols)]
     end
 
-    variables, equations = results
+    variables = OrderedDict{String, Tuple{Int, Bool}}()
+    equations = OrderedDict{String, Tuple{Int, Bool}}()
+    
+    for (chunk_vars, chunk_eqs) in results
+        merge!(variables, chunk_vars)
+        merge!(equations, chunk_eqs)
+    end
+
     return variables, equations
 end
 

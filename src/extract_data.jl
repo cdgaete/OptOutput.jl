@@ -1,4 +1,3 @@
-
 function combine_primal_dual_solutions(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[])
     variables, equations = extract_variables_and_equations_from_mps(mps_string, symbols)
     
@@ -29,17 +28,18 @@ function combine_primal_dual_solutions_parallel(mps_string::String, primal_solut
     @assert length(primal_solution) == length(variables) "Mismatch between primal solution length and number of variables"
     @assert length(dual_solution) == length(equations) "Mismatch between dual solution length and number of equations"
     
-    all_results = @distributed (merge) for (data_type, data) in [("primal", variables), ("dual", equations)]
-        partial_results = OrderedDict{String, Float64}()
-        solution = data_type == "primal" ? primal_solution : dual_solution
-        
-        for (name, (index, include)) in data
-            if include
-                partial_results[name] = solution[index]
-            end
+    all_results = OrderedDict{String, Float64}()
+
+    for (name, (index, include)) in variables
+        if include
+            all_results[name] = primal_solution[index]
         end
-        
-        partial_results
+    end
+
+    for (name, (index, include)) in equations
+        if include
+            all_results[name] = dual_solution[index]
+        end
     end
     
     return all_results
