@@ -1,6 +1,6 @@
 function extract_variables_and_equations_from_mps(mps_string::String, symbols::Vector{String}=String[])
-    variables = OrderedDict{String, Int}()
-    equations = OrderedDict{String, Int}()
+    variables = OrderedDict{String, Tuple{Int, Bool}}()
+    equations = OrderedDict{String, Tuple{Int, Bool}}()
     current_section = ""
     symbol_set = isempty(symbols) ? nothing : Set(symbols)
     var_index = 0
@@ -22,18 +22,14 @@ function extract_variables_and_equations_from_mps(mps_string::String, symbols::V
             if parts[1] == "N"
                 continue
             end
+            eq_index += 1
             eq_prefix = split(parts[2], '[', limit=2)[1]
-            if symbol_set === nothing || eq_prefix in symbol_set
-                eq_index += 1
-                equations[parts[2]] = eq_index
-            end
+            equations[parts[2]] = (eq_index, symbol_set === nothing || eq_prefix in symbol_set)
         elseif current_section == "COLUMNS" && length(parts) >= 2
             var_prefix = split(parts[1], '[', limit=2)[1]
-            if symbol_set === nothing || var_prefix in symbol_set
-                if !haskey(variables, parts[1])
-                    var_index += 1
-                    variables[parts[1]] = var_index
-                end
+            if !haskey(variables, parts[1])
+                var_index += 1
+                variables[parts[1]] = (var_index, symbol_set === nothing || var_prefix in symbol_set)
             end
         end
     end
