@@ -1,6 +1,6 @@
 # OptOutput.jl
 
-OptOutput.jl is a Julia package designed to simplify the process of collecting, transforming, and analyzing optimization results. It provides a set of powerful tools for working with MPS files, solver outputs, and optimization solutions, making it easier to extract insights from your optimization models.
+OptOutput.jl is a Julia package designed to simplify the process of collecting, transforming, and analyzing optimization results. It provides a set of powerful tools for working with MPS files, solver outputs, and optimization solutions, making it easier to extract insights from your optimization models. Particularly to use [cuPDLP.jl](https://github.com/jinwen-yang/cuPDLP.jl) solver.
 
 ## Features
 
@@ -14,10 +14,18 @@ OptOutput.jl is a Julia package designed to simplify the process of collecting, 
 
 ## Installation
 
-You can install OptOutput.jl using Julia's package manager. From the Julia REPL, type `]` to enter the Pkg REPL mode and run:
+You can install OptOutput.jl using the following command:
 
 ```julia
-pkg> add OptOutput
+using Pkg
+Pkg.add(url="https://github.com/cdgaete/OptOutput.jl")
+```
+
+In the future we expect to using Julia's package manager. It would be so:
+
+```julia
+using Pkg
+Pkg.add("OptOutput")
 ```
 
 ## Usage
@@ -53,6 +61,8 @@ for (case, df) in dataframes
     println()
 end
 ```
+
+There is a complete example of how to use OptOutput.jl with [cuPDLP.jl](https://github.com/jinwen-yang/cuPDLP.jl) [here](example/optoutput_cupdlp_dims.jl)
 
 ## Advanced Usage
 

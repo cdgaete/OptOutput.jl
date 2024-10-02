@@ -119,32 +119,23 @@ function structure_optimization_results(input_dict, named_sets, variable_dimensi
     end
 
     result = Dict{String, Dict{String, Union{Vector{Float64}, Vector{Int}}}}()
-    for (key, value) in input_dict
-        case, dim_values = parse_key(key)
-        if !haskey(result, case)
-            result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
-            result[case]["value"] = Vector{Float64}()
+    
+    for (case, dimensions) in variable_dimensions
+        result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
+        result[case]["value"] = Vector{Float64}()
+        for dim in dimensions
+            result[case][dim] = Vector{Int}()
         end
-        for (i, dim) in enumerate(get(variable_dimensions, case, []))
-            if i <= length(dim_values)
-                if !haskey(result[case], dim)
-                    result[case][dim] = Vector{Int}()
-                end
-                push!(result[case][dim], dim_values[i])
-            end
-        end
-        push!(result[case]["value"], Float64(value))
     end
 
-    for case in keys(variable_dimensions)
-        if !haskey(result, case)
-            result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
-            result[case]["value"] = Vector{Float64}()
-        end
-        for dim in variable_dimensions[case]
-            if !haskey(result[case], dim)
-                result[case][dim] = Vector{Int}()
-                push!(result[case]["value"], 0.0)
+    for (key, value) in input_dict
+        case, dim_values = parse_key(key)
+        if haskey(variable_dimensions, case)
+            push!(result[case]["value"], Float64(value))
+            for (i, dim) in enumerate(variable_dimensions[case])
+                if i <= length(dim_values)
+                    push!(result[case][dim], dim_values[i])
+                end
             end
         end
     end
