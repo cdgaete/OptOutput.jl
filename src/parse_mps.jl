@@ -4,16 +4,30 @@ function extract_variables_and_equations_from_mps_parallel(mps_string::String, s
     chunks = [String.(lines[i:min(i+chunk_size-1, end)]) for i in 1:chunk_size:length(lines)]
 
     results = @distributed (vcat) for chunk in chunks
-        [extract_variables_and_equations_from_chunk(chunk, symbols)]
+        extract_variables_and_equations_from_chunk(chunk, symbols)
     end
 
     variables = OrderedDict{String, Tuple{Int, Bool}}()
     equations = OrderedDict{String, Tuple{Int, Bool}}()
+    var_index = 0
+    eq_index = 0
     
     for (chunk_vars, chunk_eqs) in results
-        merge!(variables, chunk_vars)
-        merge!(equations, chunk_eqs)
+        for (var, (_, include)) in chunk_vars
+            if !haskey(variables, var)
+                var_index += 1
+                variables[var] = (var_index, include)
+            end
+        end
+        for (eq, (_, include)) in chunk_eqs
+            if !haskey(equations, eq)
+                eq_index += 1
+                equations[eq] = (eq_index, include)
+            end
+        end
     end
+
+    @info "Extracted $(length(variables)) variables and $(length(equations)) equations from MPS file"
 
     return variables, equations
 end
@@ -23,8 +37,6 @@ function extract_variables_and_equations_from_chunk(chunk::Vector{String}, symbo
     equations = OrderedDict{String, Tuple{Int, Bool}}()
     current_section = ""
     symbol_set = isempty(symbols) ? nothing : Set(symbols)
-    var_index = 0
-    eq_index = 0
 
     for line in chunk
         if startswith(line, "ROWS")
@@ -42,14 +54,12 @@ function extract_variables_and_equations_from_chunk(chunk::Vector{String}, symbo
             if parts[1] == "N"
                 continue
             end
-            eq_index += 1
             eq_prefix = split(parts[2], '[', limit=2)[1]
-            equations[parts[2]] = (eq_index, symbol_set === nothing || eq_prefix in symbol_set)
+            equations[parts[2]] = (0, symbol_set === nothing || eq_prefix in symbol_set)
         elseif current_section == "COLUMNS" && length(parts) >= 2
             var_prefix = split(parts[1], '[', limit=2)[1]
             if !haskey(variables, parts[1])
-                var_index += 1
-                variables[parts[1]] = (var_index, symbol_set === nothing || var_prefix in symbol_set)
+                variables[parts[1]] = (0, symbol_set === nothing || var_prefix in symbol_set)
             end
         end
     end

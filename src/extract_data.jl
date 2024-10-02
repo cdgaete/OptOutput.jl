@@ -25,8 +25,12 @@ end
 function combine_primal_dual_solutions_parallel(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[], num_workers::Int=4)
     variables, equations = extract_variables_and_equations_from_mps_parallel(mps_string, symbols, num_workers)
     
-    @assert length(primal_solution) == length(variables) "Mismatch between primal solution length and number of variables"
-    @assert length(dual_solution) == length(equations) "Mismatch between dual solution length and number of equations"
+    if length(primal_solution) != length(variables)
+        error("Mismatch between primal solution length ($(length(primal_solution))) and number of variables ($(length(variables)))")
+    end
+    if length(dual_solution) != length(equations)
+        error("Mismatch between dual solution length ($(length(dual_solution))) and number of equations ($(length(equations)))")
+    end
     
     all_results = OrderedDict{String, Float64}()
 
