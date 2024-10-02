@@ -10,12 +10,15 @@ function parse_mps_sections(mps_string::String)
         elseif startswith(line, "COLUMNS")
             current_section = "COLUMNS"
             continue
-        elseif startswith(line, "RHS") || startswith(line, "BOUNDS")
+        elseif startswith(line, "RHS") || startswith(line, "BOUNDS") || startswith(line, "RANGES")
             break
         end
 
         parts = split(strip(line))
         if current_section == "ROWS" && length(parts) >= 2
+            if parts[1] == "N"
+                continue
+            end
             push!(equations, parts[2])
         elseif current_section == "COLUMNS" && length(parts) >= 2
             push!(variables, parts[1])

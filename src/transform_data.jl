@@ -126,7 +126,7 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
             result[case]["value"] = Vector{Float64}()
         end
         for (i, dim) in enumerate(get(case_dimensions, case, []))
-            if i <= length(dim_values) && dim_values[i] != 0
+            if i <= length(dim_values)
                 if !haskey(result[case], dim)
                     result[case][dim] = Vector{Int}()
                 end
@@ -134,6 +134,20 @@ function transform_dict(input_dict, predefined_values, case_dimensions)
             end
         end
         push!(result[case]["value"], Float64(value))
+    end
+
+    # Add missing variables and constraints with zero values
+    for case in keys(case_dimensions)
+        if !haskey(result, case)
+            result[case] = Dict{String, Union{Vector{Float64}, Vector{Int}}}()
+            result[case]["value"] = Vector{Float64}()
+        end
+        for dim in case_dimensions[case]
+            if !haskey(result[case], dim)
+                result[case][dim] = Vector{Int}()
+                push!(result[case]["value"], 0.0)
+            end
+        end
     end
 
     return result, dim_to_index, index_to_dim
