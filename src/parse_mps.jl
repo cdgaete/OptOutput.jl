@@ -1,8 +1,7 @@
-
 function extract_variables_and_equations_from_mps_parallel(mps_string::String, symbols::Vector{String}=String[], num_workers::Int=4)
     lines = split(mps_string, "\n")
     chunk_size = ceil(Int, length(lines) / num_workers)
-    chunks = [lines[i:min(i+chunk_size-1, end)] for i in 1:chunk_size:length(lines)]
+    chunks = [String.(lines[i:min(i+chunk_size-1, end)]) for i in 1:chunk_size:length(lines)]
 
     results = @distributed (merge) for chunk in chunks
         extract_variables_and_equations_from_chunk(chunk, symbols)
