@@ -1,20 +1,22 @@
 # OptOutput.jl
 
-OptOutput.jl is a Julia package that provides utility functions for collecting optimization results in tabular format (DataFrames) from MPS files and solver outputs. It supports extracting primal and dual value results and transforming them into easily accessible data structures.
+OptOutput.jl is a Julia package designed to simplify the process of collecting, transforming, and analyzing optimization results. It provides a set of powerful tools for working with MPS files, solver outputs, and optimization solutions, making it easier to extract insights from your optimization models.
 
 ## Features
 
-- Parse MPS format strings
-- Extract primal and dual solutions
-- Transform optimization results into structured data
+- Parse MPS format strings and extract variable and equation information
+- Process primal and dual solutions from various optimization solvers
+- Transform optimization results into structured data formats
 - Generate DataFrames for easy data manipulation and analysis
-- Optional saving of results to CSV files
+- Create named sets and dimensions for better organization of results
+- Save results to CSV files for further analysis or reporting
+- Support for custom dimension naming and filtering
 
 ## Installation
 
 You can install OptOutput.jl using Julia's package manager. From the Julia REPL, type `]` to enter the Pkg REPL mode and run:
 
-```
+```julia
 pkg> add OptOutput
 ```
 
@@ -27,22 +29,16 @@ using JuMP
 using OptOutput
 using YourExternalSolver  # Replace with your actual solver package
 
-# Create your JuMP model
-model = Model()
-@variable(model, x >= 0)
-@variable(model, 0 <= y <= 3)
-@variable(model, z <= 1)
-@objective(model, Min, 12x + 20y - z)
-@constraint(model, c1, 6x + 8y >= 100)
-@constraint(model, c2, 7x + 12y >= 120)
-@constraint(model, c3, x + y <= 20)
+# Create and solve your JuMP model
+model = create_your_model()
+optimize!(model)
 
 # Write the model to an MPS file
 write_to_file(model, "model.mps")
 
-# Solve the model using your external solver
-# This is just an example, replace with your actual solver call
-primal_solution, dual_solution = solve_with_external_solver("model.mps")
+# Get primal and dual solutions from your solver
+primal_solution = value.(all_variables(model))
+dual_solution = dual.(all_constraints(model, include_variable_in_set_constraints=false))
 
 # Process the optimization results
 dataframes, all_results = process_optimization_results("model.mps", primal_solution, dual_solution)
@@ -58,10 +54,46 @@ for (case, df) in dataframes
 end
 ```
 
+## Advanced Usage
+
+### Custom Dimension Naming
+
+You can provide custom names for dimensions:
+
+```julia
+custom_named_sets = Dict(
+    "countries" => ["BE", "DE"],
+    "timesteps" => ["t0883", "t2013", "t2264", "t6467", "t6469"],
+    "ev_types" => ["ev015", "ev016", "ev017"],
+    "technologies" => ["Offshore_Wind", "Run-of-River"]
+)
+
+named_sets, prefix_dim_names = create_named_sets_and_dimensions(all_results, custom_named_sets)
+```
+
+### Filtering Results
+
+You can filter results by specifying symbols of interest:
+
+```julia
+symbols_of_interest = ["EV_CHARGE", "G", "H2_N_ELY"]
+dataframes, all_results = process_optimization_results("model.mps", primal_solution, dual_solution, symbols_of_interest)
+```
+
+## API Reference
+
+- `process_optimization_results(mps_path, primal_solution, dual_solution, symbols=String[])`: Main function to process optimization results
+- `create_named_sets_and_dimensions(input_dict, named_sets=nothing, symbols=String[])`: Create named sets and dimensions from input data
+- `structure_optimization_results(input_dict, named_sets, variable_dimensions)`: Structure optimization results into a more accessible format
+- `create_result_dataframes(structured_results, index_to_dim, variable_dimensions, cases=String[])`: Create DataFrames from structured results
+- `save_results_to_csv(dataframes, output_dir="output")`: Save DataFrames to CSV files
+- `combine_primal_dual_solutions(mps_string, primal_solution, dual_solution)`: Combine primal and dual solutions with variable and equation names
+- `read_solution_from_file(solution_file_path)`: Read a solution from a file
+
 ## Contributing
 
 Contributions to OptOutput.jl are welcome! Please feel free to submit issues, pull requests, or suggestions to improve the package.
 
 ## License
 
-This project is licensed under the MIT License. See the LICENSE file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
