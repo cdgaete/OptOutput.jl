@@ -1,8 +1,10 @@
 function extract_variables_and_equations_from_mps(mps_string::String, symbols::Vector{String}=String[])
-    variables = String[]
-    equations = String[]
+    variables = OrderedDict{String, Int}()
+    equations = OrderedDict{String, Int}()
     current_section = ""
     symbol_set = isempty(symbols) ? nothing : Set(symbols)
+    var_index = 0
+    eq_index = 0
 
     for line in split(mps_string, "\n")
         if startswith(line, "ROWS")
@@ -22,15 +24,19 @@ function extract_variables_and_equations_from_mps(mps_string::String, symbols::V
             end
             eq_prefix = split(parts[2], '[', limit=2)[1]
             if symbol_set === nothing || eq_prefix in symbol_set
-                push!(equations, parts[2])
+                eq_index += 1
+                equations[parts[2]] = eq_index
             end
         elseif current_section == "COLUMNS" && length(parts) >= 2
             var_prefix = split(parts[1], '[', limit=2)[1]
             if symbol_set === nothing || var_prefix in symbol_set
-                push!(variables, parts[1])
+                if !haskey(variables, parts[1])
+                    var_index += 1
+                    variables[parts[1]] = var_index
+                end
             end
         end
     end
 
-    return unique!(variables), unique!(equations)
+    return variables, equations
 end
