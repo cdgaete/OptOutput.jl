@@ -106,7 +106,7 @@ primal_solution = value.(all_variables(model))
 dual_solution = dual.(all_constraints(model, include_variable_in_set_constraints=false))
 
 # Process the optimization results
-dataframes, all_results = process_optimization_results("model.mps", primal_solution, dual_solution)
+dataframes, all_results, qps_model = process_optimization_results("model.mps", primal_solution, dual_solution)
 
 # Optionally save results to CSV files
 save_results_to_csv(dataframes, "output_directory")
@@ -144,7 +144,7 @@ You can filter results by specifying symbols of interest:
 
 ```julia
 symbols_of_interest = ["EV_CHARGE", "G", "H2_N_ELY"]
-dataframes, all_results = process_optimization_results("model.mps", primal_solution, dual_solution, symbols_of_interest)
+dataframes, all_results, qps_model = process_optimization_results("model.mps", primal_solution, dual_solution, symbols_of_interest)
 ```
 
 ## API Reference
