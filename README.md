@@ -1,16 +1,15 @@
 # OptOutput.jl
 
-OptOutput.jl is a Julia package designed to simplify the process of collecting, transforming, and analyzing optimization results. It provides a set of powerful tools for working with MPS files, solver outputs, and optimization solutions, making it easier to extract insights from your optimization models. Particularly to use [cuPDLP.jl](https://github.com/jinwen-yang/cuPDLP.jl) solver.
+OptOutput.jl is a Julia package designed to process and organize optimization results, particularly for large-scale linear programming models. It focuses on parsing MPS files and solver outputs, transforming optimization variables and constraints into a structured format. This tool is especially useful for handling results from solvers like [cuPDLP.jl](https://github.com/jinwen-yang/cuPDLP.jl) that may not have direct JuMP integration.
 
-## Features
+## Key Functions
 
-- Parse MPS format strings and extract variable and equation information
-- Process primal and dual solutions from various optimization solvers
-- Transform optimization results into structured data formats
-- Generate DataFrames for easy data manipulation and analysis
-- Create named sets and dimensions for better organization of results
-- Save results to CSV files for further analysis or reporting
-- Support for custom dimension naming and filtering
+- Parse MPS format strings to extract variable and constraint information
+- Process primal and dual solutions from optimization solvers
+- Organize results into DataFrames, separating multi-dimensional variables and constraints
+- Generate named sets and dimensions for improved data organization
+- Save results to CSV files for further analysis 
+
 
 ## Installation
 
