@@ -1,3 +1,4 @@
 .repoai/
 output*/
 example/data/
+Manifest.toml
