@@ -61,7 +61,7 @@ for (case, df) in dataframes
 end
 ```
 
-There is a complete example of how to use OptOutput.jl with [cuPDLP.jl](https://github.com/jinwen-yang/cuPDLP.jl) [here](example/optoutput_cupdlp_dims.jl)
+There is a complete example of how to use OptOutput.jl with cuPDLP.jl [here](example/optoutput_cupdlp_dims.jl)
 
 ## Advanced Usage
 
