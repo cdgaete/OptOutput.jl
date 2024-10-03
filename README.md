@@ -8,7 +8,65 @@ OptOutput.jl is a Julia package designed to process and organize optimization re
 - Process primal and dual solutions from optimization solvers
 - Organize results into DataFrames, separating multi-dimensional variables and constraints
 - Generate named sets and dimensions for improved data organization
-- Save results to CSV files for further analysis 
+- Save results to CSV files for further analysis
+
+
+## Explanation through Examples
+
+Let's consider a simple energy system model with generators (GEN) and capacity (CAP) variables. In the MPS format, these might be represented as:
+
+```
+GEN[A1,B1]    obj
+GEN[A1,B2]    obj
+GEN[A2,B1]    obj
+GEN[A2,B2]    obj
+CAP[B1]       obj
+CAP[B2]       obj
+```
+
+After processing with OptOutput.jl, the package would:
+
+1. Recognize the dimensions:
+   - `dim1` (A1, A2) for GEN
+   - `dim2` (B1, B2) for both GEN and CAP
+
+2. Create structured DataFrames:
+
+For GEN:
+```julia
+julia> dataframes["GEN"]
+4×3 DataFrame
+ Row │ dim1  dim2  value 
+     │ Any   Any   Float64
+─────┼─────────────────────
+   1 │ A1    B1        0.0
+   2 │ A1    B2        0.0
+   3 │ A2    B1        0.0
+   4 │ A2    B2        0.0
+```
+
+For CAP:
+```julia
+julia> dataframes["CAP"]
+2×2 DataFrame
+ Row │ dim2  value 
+     │ Any   Float64
+─────┼──────────────
+   1 │ B1        0.0
+   2 │ B2        0.0
+```
+
+This structure allows for easy manipulation and analysis of the optimization results. For instance, you could easily filter or aggregate results:
+
+```julia
+# Filter GEN results for dim1 == "A1"
+gen_a1 = dataframes["GEN"][dataframes["GEN"].dim1 .== "A1", :]
+
+# Sum CAP values
+total_cap = sum(dataframes["CAP"].value)
+```
+
+OptOutput.jl simplifies working with these results, especially for large-scale models with many variables and constraints spanning multiple dimensions.
 
 
 ## Installation
