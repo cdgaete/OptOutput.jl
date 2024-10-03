@@ -76,7 +76,7 @@ function main()
 
     primal_solution, dual_solution = solve_with_cupdlp(mps_file_path)
 
-    dataframes, all_results = process_optimization_results(mps_file_path, primal_solution, dual_solution)
+    dataframes, all_results, _ = process_optimization_results(mps_file_path, primal_solution, dual_solution)
 
     save_results_to_csv(dataframes, output_dir)
 

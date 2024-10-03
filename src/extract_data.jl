@@ -1,5 +1,5 @@
-function combine_primal_dual_solutions(mps_string::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[])
-    variables, equations = extract_variables_and_equations_from_mps(mps_string, symbols)
+function combine_primal_dual_solutions(mps_file_path::String, primal_solution::Vector{Float64}, dual_solution::Vector{Float64}, symbols::Vector{String}=String[])
+    variables, equations, model = extract_variables_and_equations_from_mps(mps_file_path, symbols)
     
     all_results = OrderedDict{String, Float64}()
     
@@ -15,7 +15,9 @@ function combine_primal_dual_solutions(mps_string::String, primal_solution::Vect
         end
     end
     
-    return all_results
+    # all_results["OBJ"] = dot(model.c, primal_solution) + model.c0
+    
+    return all_results, model
 end
 
 function read_solution_from_file(solution_file_path)
