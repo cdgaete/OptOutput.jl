@@ -22,6 +22,7 @@ GEN[A2,B1]    obj
 GEN[A2,B2]    obj
 CAP[B1]       obj
 CAP[B2]       obj
+...
 ```
 
 After processing with OptOutput.jl, the package would:
