@@ -87,7 +87,7 @@ Pkg.add("OptOutput")
 
 ## Usage
 
-Here's a basic example of how to use OptOutput.jl with an external solver:
+Here's an example of how to use OptOutput.jl with an external solver:
 
 ```julia
 using JuMP
