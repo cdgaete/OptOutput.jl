@@ -69,7 +69,7 @@ total_cap = sum(dataframes["CAP"].value)
 OptOutput.jl simplifies working with these results, especially for large-scale models with many variables and constraints spanning multiple dimensions.
 
 
-## Installation
+## Quick Installation
 
 You can install OptOutput.jl using the following command:
 
